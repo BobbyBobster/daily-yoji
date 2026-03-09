@@ -1,0 +1,308 @@
+<!doctype html>
+<html lang="jpn" translate="no" data-bs-core="elegant" data-bs-theme="light">
+  <head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <link rel="icon" type="image/png" href="static/img/icontwo.png" />
+
+ 
+    <title>毎日四字</title>
+ 
+    <link href="static/vendor/halfmoon-2.0.2/css/halfmoon.min.css" rel="stylesheet">
+    <link href="static/vendor/halfmoon-2.0.2/css/cores/halfmoon.elegant.css" rel="stylesheet">
+
+    <meta name="theme-color" content="#FAE6D2"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="manifest" href="/manifest.json">
+
+    <script src="static/js/toggler.js"></script>
+
+    <style>
+/*
+    .middle-x {
+  position: absolute; 
+  top: 50%; left: 0; right: 0; height: 2px; background-color: black;
+  transform: translateY(-50%); 
+}
+    .middle-y {
+  position: fixed; 
+  top: 0; bottom:0; left: 50%; background-color: black; width: 2px;
+  transform: translateX(-50%); 
+}
+*/
+    * {
+      font-family: inherit;
+    }
+    body {
+      font-family: yugothic, "Hiragino Sans", "Noto Sans JP", sans-serif;
+      text-transform: lowercase;
+    }
+    
+    .modal-content {
+      text-transform: none;
+    }
+
+    .yumincho {
+      font-family: yumincho, "Hiragino", "Noto Serif JP", serif;
+    }
+
+    .upright {
+      writing-mode: vertical-rl;
+      text-orientation: upright;
+    }
+    .write-vertical-center {
+      display: flex;
+      text-align: center;
+      justify-content: center;
+      align-items: center;
+    }
+
+    @keyframes fadeIn {
+      0% { opacity: 0; }
+      100% { opacity: 1; }
+    }
+    @keyframes fadeOut {
+      0% { opacity: 1; }
+      100% { opacity: 0; }
+    }
+
+    .fade-in-slow {
+      animation-name: fadeIn;
+      animation-duration: 3s;
+      animation-fill-mode: forwards;
+      animation-delay: 0.5s;
+    }
+
+    #kanji {
+      font-size: 9rem;
+      opacity: 1;
+    }
+    #reading {
+      font-size: 3rem;
+      opacity: 0;
+      transition: opacity 0.2s ease-in-out;
+    }
+
+    </style>
+  </head>
+  <body>
+    <!--
+    <div class="middle-x"></div>
+    <div class="middle-y"></div>
+    -->
+
+    <div id=main-display class="d-flex justify-content-center mt-3">
+      <ruby class="h1 write-vertical-center yumincho upright" role="fade-in-slow">
+        <span id=kanji>毎日四字</span>
+        <rt id=reading class="position-absolute end-0 pe-3 pe-sm-5 z-2">ふりがな</rt>
+      </ruby></h1>
+    </div>
+      <p id=date class="my-4 text-center">令和0年0月00日（月）</p>
+
+
+
+      <div class="container col-5">
+        <div class=row>
+          <div class="col-sm-1 col-md-4 col-lg-5  write-vertical-center">
+            <p class="upright">翻訳</p>
+          </div>
+          <div class=col>
+            <p id=meaning>Meaning in English</p>
+            <p>Use it as a <span id=usage>Usage</span></p>
+            <p id=sentence_text></p>
+            <p id=translation_text></p>
+          </div>
+        </div>
+      </div>
+
+
+    <footer class="btn-toolbar  col-sm-8 col-md-6 col-xl-5  position-sticky bottom-0 mx-auto px-4 my-2 pb-2 justify-content-between" role="toolbar">
+      <div class="btn-group" role="group">
+      <button class="btn btn-light"
+        id=bd-theme type="button">明・暗</button>
+      </div>
+      <div class="btn-group" role="group">
+        <button id=btn-furigana class="btn btn-secondary" data-bs-toggle="button" role="button" type="button">
+          振り仮名</button>
+        <button id=license type="button" class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#license-modal">
+          使用</button>
+        <button id=btn-next class="btn btn-secondary" role="button" type="button">
+          次々</button>
+      </div>
+      <div class="btn-group" role="group">
+        <div class="btn-group" role="group">
+          <button type="button" class="btn btn-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+           他の物
+          </button>
+          <ul class="dropdown-menu">
+            <li> <a id=wikipedia class="dropdown-item disabled" target="_blank" href="https://ja.wikipedia.org/wiki/一期一会">ウィキペディア</a> </li>
+            <li> <a class="dropdown-item" target="_blank" href="https://yoji-jukugo.com/一期一会">四字熟語.com</a> </li>
+            <li> <a class="dropdown-item" target="_blank" href="https://jisho.org/search/一期一会">jisho.org</a> </li>
+          </ul>
+        </div>
+      </div>
+    </footer>
+
+
+ 
+<!-- License information Modal -->
+<div class="modal fade" id="license-modal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h1 class="modal-title fs-5" id="modal-title-1">License information</h1>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <p>Copyright  2005  Kanji Haitani</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+
+
+
+      <script>
+        const setDate = (dateString) => {
+          const elem = document.querySelector('#date');
+          const dateToSet = new Date(dateString);
+          elem.innerText = 
+            new Intl.DateTimeFormat('ja-JP-u-ca-japanese', {
+              era: 'long', // Long era name (e.g. '令和')
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric',
+            }).format(dateToSet) +
+            '（' +
+            new Intl.DateTimeFormat('ja-JP-u-ca-japanese', {
+              weekday: 'short' // Day of the week (e.g. '金')
+            }).format(dateToSet) +
+            '）';
+        }
+
+        const setElem = (elemID, elemText) => {
+          document.querySelector('#' + elemID).innerText = elemText;
+        }
+
+        const refreshData = (dateString) => {
+          ['sentence_text', 'translation_text', 'usage'].forEach(elem => setElem(elem, ''));
+
+          fetch('http://192.168.0.216:5000/api/date/' + dateString)
+            .then(response => {
+              if (!response.ok) { throw new Error(`HTTP error status: ${response.status}`); }
+              return response.json();
+            })
+            .catch(error => console.error('Fetch error:', error))
+            .then((data) => { 
+              console.log('yoji: ', data);
+              const elemToUpdate = new Set(['kanji', 'reading', 'meaning', 'usage']);
+              const filtered = Object.keys(data).filter(elem => elemToUpdate.has(elem) && data[elem] !== null);
+              filtered.forEach(elem => setElem(elem, data[elem]));
+
+              setDate(dateString);
+
+              const btnWiki = document.querySelector('#wikipedia');
+              btnWiki.href = 'https://ja.wikipedia.org/wiki/' + data['kanji'];
+              if (data['is_wikipedia_link'] === 1) {
+                btnWiki.classList.remove('disabled');
+              } else {
+                btnWiki.classList.add('disabled');
+              }
+
+
+              if (data['sentence_id'] !== null) {
+                fetch('http://192.168.0.216:5000/api/sentence/' + data['sentence_id'])
+                  .then(response => {
+                    if (!response.ok) { throw new Error(`HTTP error status: ${response.status}`); }
+                    return response.json();
+                  })
+                  .catch(error => console.error('Fetch error:', error))
+                  .then((s_data) => {
+                    console.log('s_data: ', s_data)
+                    setElem('sentence_text', s_data['sentence_text']);
+
+                    if (s_data.hasOwnProperty('translation_id') && s_data['translation_id'] !== null) {
+                      fetch('http://192.168.0.216:5000/api/translation/' + s_data['translation_id'])
+                        .then(response => {
+                          if (!response.ok) { throw new Error(`HTTP error status: ${response.status}`); }
+                          return response.json();
+                        })
+                        .catch(error => console.error('Fetch error:', error))
+                        .then((t_data) => {
+                          console.log('t_data: ', t_data)
+
+                          setElem('translation_text', t_data['translation_text']);
+                          //`Yojijukugo data: Copyright  2005  Kanji Haitani <br> Tatoeba sentence: ${s_data['owner']}  CC BY SA 2.0 FR <br> Tatoeba translation: ${t_data['owner']}  CC BY SA 2.0 FR`);
+
+                          const modalLicenseText = document.querySelector('#license-modal .modal-body');
+                          modalLicenseText.innerHTML = `<p>Yojijukugo data: Copyright  2005  Kanji Haitani</p>
+                        <p>Tatoeba sentence: ${s_data['owner']}  CC BY SA 2.0 FR</p>
+                        <p>Tatoeba translation: ${t_data['owner']}  CC BY SA 2.0 FR</p>`
+                        })
+                    }
+                  })
+              }})
+        }
+
+        const today = new Date();
+        const dateString = today.toISOString().split('T')[0];
+        setDate(dateString);
+        refreshData(dateString);
+
+      </script>
+
+    <script>
+      const getRandomInt = (max) => { return Math.floor(Math.random() * max); }
+
+      const btnNext = document.querySelector('#btn-next');
+      btnNext.addEventListener('click', () => {
+        futureDate = new Date();
+        futureDate.setDate(futureDate.getDate() + getRandomInt(9));
+        const dateString = futureDate.toISOString().split('T')[0];
+        setDate(dateString);
+        refreshData(dateString);
+      });
+    </script>
+
+    <script>
+      const reading = document.querySelector('#reading');
+      const btnFurigana = document.querySelector('#btn-furigana');
+      btnFurigana.addEventListener('click', () => {
+        if (reading.checkVisibility({opacityProperty: true})) {
+          reading.style.opacity = 0;
+        } else {
+          reading.style.opacity = 1;
+        }
+      });
+    </script>
+
+
+    <script src="static/vendor/bootstrap.bundle.min.js"></script>
+    <script>
+      // Against ARIA warning
+      document.addEventListener('hide.bs.modal', (event) => {
+          if (document.activeElement) { document.activeElement.blur(); }
+      });
+    </script>
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', function() {
+          navigator.serviceWorker.register("/sw.js").then(function(registration) {
+            console.log('ServiceWorker registration successful with scope: ', registration.scope);
+          }, function(err) {
+            console.log('ServiceWorker registration failed: ', err);
+          });
+        });
+      }
+    </script>
+  </body>
+</html>
+

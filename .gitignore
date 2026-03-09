@@ -1,3 +1,8 @@
+data/
+fiddles/
+.DS_Store
+data/jawiki-latest-all-titles-in-ns0.gz
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]
