@@ -26,6 +26,6 @@
 - [ ] Switch to using httpx module instead of requests (for async requests)
 - [ ] Update example sentences through users (they make the Tatoeba API request and send results back to db)
 - [ ] Add voting on example sentences to make ranking for usefulness
-
+- [ ] Move fetch requests outside of main thread using WebWorkers
 
 
