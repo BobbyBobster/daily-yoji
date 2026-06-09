@@ -31,6 +31,7 @@ flask run
 ## Built With
 - [Flask](https://flask.palletsprojects.com/en/stable/) - Backend / Front-end
 - [SQLite](https://sqlite.org/) - Database
+- [Halfmoon](https://www.gethalfmoon.com/) - Styling
 
 
 ## Relevant licenses
