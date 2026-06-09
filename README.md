@@ -1,4 +1,49 @@
-# Daily yojijukugo to use in conversations
+# 📚 Daily yojijukugo
+Get a new 4-kanji compound every day and try to use it in conversation.
+四字熟語（yojijukugo）are four character compound words which have a particular idiomatic meaning.
+
+![Screenshot showing first app screen](/../screenshos/screenshots/openingscreen.png?raw=true "Opening screen")
+<br>
+App home: _Currently not live._
+
+
+## Getting Started
+### Setup
+
+Install requirements
+```
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+```
+
+### DB Setup
+First download the relevant data files.
+```
+python3 setup-database.py --create --populate --sentences --links --dates 
+```
+
+### Run a server
+```
+flask run
+```
+
+## Built With
+- [Flask](https://flask.palletsprojects.com/en/stable/) - Backend / Front-end
+- [SQLite](https://sqlite.org/) - Database
+
+
+## Relevant licenses
+- CC BY 2.0 FR for Tatoeba sentences
+- Kanji Haitani for the 4jword3 file
+  Four-Character Idiomatic Compounds         Yojijukugo   2005   v.3.11   
+  英訳四字熟語辞典    第３版    (2005年）
+  Copyright  2005  Kanji Haitani
+- https://www.edrdg.org/edrdg/licence.html
+- Cite wikipedia for solar term translations https://en.wikipedia.org/wiki/Solar_term#Multilingual_list
+
+
+## Todo's / Worfklow
 - Extract yoji from 4jword file
 - Distribute yoji over days
 - Add some usage info (suru-verbs, na-adjectives, etc.)
@@ -11,14 +56,6 @@
 - Add license information
 - Add solar term?
 
-## Relevant licenses
-- ~~https://www.edrdg.org/edrdg/licence.html which is the source of Jisho~~
-- CC BY 2.0 FR for Tatoeba sentences
-- Kanji Haitani for the 4jword3 file
-  Four-Character Idiomatic Compounds         Yojijukugo   2005   v.3.11   
-  英訳四字熟語辞典    第３版    (2005年）
-  Copyright  2005  Kanji Haitani
-- Cite wikipedia for solar term translations https://en.wikipedia.org/wiki/Solar_term#Multilingual_list
 
 ## Improvements
 - [ ] Add deepdive option with info on the four kanji
@@ -27,5 +64,3 @@
 - [ ] Update example sentences through users (they make the Tatoeba API request and send results back to db)
 - [ ] Add voting on example sentences to make ranking for usefulness
 - [ ] Move fetch requests outside of main thread using WebWorkers
-
-
