@@ -2,7 +2,7 @@
 Get a new 4-kanji compound every day and try to use it in conversation.
 四字熟語（yojijukugo）are four character compound words which have a particular idiomatic meaning.
 
-![Screenshot showing first app screen](/../screenshos/screenshots/openingscreen.png?raw=true "Opening screen")
+![Screenshot showing first app screen](/../screenshots/screenshots/openingscreen.png?raw=true "Opening screen")
 <br>
 App home: _Currently not live._
 
