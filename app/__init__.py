@@ -1,9 +1,16 @@
+import os
+
 from flask import Flask
 from flask_cors import CORS
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncConnection
 from sqlalchemy import event
 
 from typing import AsyncGenerator
+
+API_URL = os.environ.get(
+    "HEROKU_APP_DEFAULT_DOMAIN_NAME",
+    os.environ.get("API_URL"),
+)
 
 read_engine = create_async_engine(
     "sqlite+aiosqlite:///yoji.db", pool_pre_ping=True, echo=True

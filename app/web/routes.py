@@ -1,11 +1,12 @@
 from flask import render_template, send_file
+from app import API_URL
 from app.web import bp
 
 
 @bp.route("/")
 @bp.route("/index")
 def index():
-    return render_template("index.html")
+    return render_template("index.html", API_URL=API_URL)
 
 
 @bp.route("/manifest.json")

@@ -195,7 +195,7 @@
         const refreshData = (dateString) => {
           ['sentence_text', 'translation_text', 'usage'].forEach(elem => setElem(elem, ''));
 
-          fetch('http://0.0.0.0:5000/api/v1/date/' + dateString)
+          fetch('https://' + {{ API_URL }} + '/api/v1/date/' + dateString)
             .then(response => {
               if (!response.ok) { throw new Error(`HTTP error status: ${response.status}`); }
               return response.json();
@@ -220,7 +220,7 @@
 
               if (data['sentence_id'] !== null && data['sentence_id'] !== undefined) {
                 console.log('sentence_id : ', data['sentence_id'])
-                fetch('http://0.0.0.0:5000/api/v1/sentence/' + data['sentence_id'])
+                fetch('https://' + {{ API_URL }} + '/api/v1/sentence/' + data['sentence_id'])
                   .then(response => {
                     if (!response.ok) { throw new Error(`HTTP error status: ${response.status}`); }
                     return response.json();
@@ -231,7 +231,7 @@
                     setElem('sentence_text', s_data['sentence_text']);
 
                     if (s_data.hasOwnProperty('translation_id') && s_data['translation_id'] !== null) {
-                      fetch('http://0.0.0.0:5000/api/v1/translation/' + s_data['translation_id'])
+                      fetch('https://' + {{ API_URL }} + '/api/v1/translation/' + s_data['translation_id'])
                         .then(response => {
                           if (!response.ok) { throw new Error(`HTTP error status: ${response.status}`); }
                           return response.json();
