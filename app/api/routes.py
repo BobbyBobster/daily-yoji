@@ -18,6 +18,7 @@ class YojiResponse(BaseModel):
     is_wikipedia_link: bool | None = None
     sentence_id: int | None = None
 
+_yoji_cols = YojiResponse.model_fields.keys()
 
 class SentenceResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True, extra="ignore")
@@ -26,12 +27,15 @@ class SentenceResponse(BaseModel):
     owner: str
     translation_id: int
 
+_sentence_cols = SentenceResponse.model_fields.keys()
 
 class TranslationResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True, extra="ignore")
     id: int
     translation_text: str
     owner: str
+
+_translation_cols = TranslationResponse.model_fields.keys()
 
 
 router = APIRouter()
@@ -43,9 +47,10 @@ async def index(
     max_id: int = 2,
     conn: AsyncConnection = Depends(get_read_conn),
 ) -> list[YojiResponse] | None:
+    print(YojiResponse.model_fields.keys())
     query = text(
-        """
-        SELECT id, kanji FROM yojijukugo
+        f"""
+        SELECT {', '.join(_yoji_cols)} FROM yojijukugo
         WHERE id < :max_id;"""
     )
     result = await conn.execute(query, {"max_id": max_id})
@@ -60,18 +65,9 @@ async def yoji(
     id_: int,
     conn: AsyncConnection = Depends(get_read_conn),
 ) -> YojiResponse:
-    cols = (
-        "id",
-        "kanji",
-        "reading",
-        "usage",
-        "meaning",
-        "is_wikipedia_link",
-        "sentence_id",
-    )
     query = text(
         f"""
-        SELECT {', '.join(cols)} FROM yojijukugo
+        SELECT {', '.join(_yoji_cols)} FROM yojijukugo
         WHERE id = :id;"""
     )
     result = await conn.execute(query, {"id": id_})
@@ -87,8 +83,8 @@ async def search_yoji(
     conn: AsyncConnection = Depends(get_read_conn),
 ) -> list[YojiResponse]:
     query = text(
-        """
-        SELECT id, kanji FROM yojijukugo
+        f"""
+        SELECT {', '.join(_yoji_cols)} FROM yojijukugo
         WHERE kanji = :q;"""
     )
     result = await conn.execute(query, {"q": q})
@@ -96,16 +92,6 @@ async def search_yoji(
     if not rows:
         raise HTTPException(status_code=404, detail="Yojijukugo not found")
     return [YojiResponse(**row) for row in rows]
-
-
-# @router.get('/yoji')
-# async def search_yoji_with_param():
-#     q = request.args.get('q')
-#     if q is None:
-#         abort(400, description='Missing required query parameter "q"')
-
-#     # Add actual search function
-#     return search_yoji(q)
 
 
 @router.get("/date/{date}")
@@ -118,19 +104,9 @@ async def date_string(
     # except ValueError:
     #     raise HTTPException(status_code=422, detail="No datestring given")
 
-    cols = (
-        "id",
-        "kanji",
-        "reading",
-        "usage",
-        "meaning",
-        "is_wikipedia_link",
-        "sentence_id",
-        "date",
-    )
     query = text(
         f"""
-        SELECT {', '.join(cols)} FROM yojijukugo
+        SELECT {', '.join(_yoji_cols)} FROM yojijukugo
         WHERE date = :date;"""
     )
     result = await conn.execute(query, {"date": date})
@@ -150,11 +126,9 @@ async def sentence(
     id_: int,
     conn: AsyncConnection = Depends(get_read_conn),
 ) -> SentenceResponse:
-    cols = ("id", "sentence_text", "owner", "translation_id")
-
     query = text(
         f"""
-        SELECT {', '.join(cols)} FROM sentence
+        SELECT {', '.join(_sentence_cols)} FROM sentence
         WHERE id = :id;"""
     )
     result = await conn.execute(query, {"id": id_})
@@ -170,8 +144,8 @@ async def translation(
     conn: AsyncConnection = Depends(get_read_conn),
 ) -> TranslationResponse:
     query = text(
-        """
-        SELECT id, translation_text, owner from translation
+        f"""
+        SELECT {', '.join(_translation_cols)} owner from translation
         WHERE id = :id;"""
     )
     result = await conn.execute(query, {"id": id_})
