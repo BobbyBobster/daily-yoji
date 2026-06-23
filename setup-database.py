@@ -52,8 +52,8 @@ def createTable(cursor):
 
 def populateDatabase(cursor):
     kanji_pattern = r"[\u4E00-\u9FFF々]+"
-    hiragana_pattern = r"[\u3040-\u309F]+"
-    katakana_pattern = r"[\u30A0-\u30FF]+"
+    # hiragana_pattern = r"[\u3040-\u309F]+"
+    # katakana_pattern = r"[\u30A0-\u30FF]+"
     reading_pattern = r"[\u3040-\u309F\u30A0-\u30FF　]+"
 
     with open("data/utf8-4j324_sj.txt", "r") as f:
@@ -76,7 +76,7 @@ def populateDatabase(cursor):
 
             cursor.execute(
                 """
-                INSERT INTO yojijukugo 
+                INSERT INTO yojijukugo
                 (kanji, reading, usage, meaning) VALUES (?, ?, ?, ?);""",
                 (kanji[0], reading, usage, meaning[0]),
             )
@@ -224,6 +224,10 @@ if __name__ == "__main__":
         conn.commit()
 
     if args.links:
+        if not os.path.exists("data/jawiki-latest-all-titles-in-ns0.gz"):
+            raise SystemExit(
+                "No wikipedia title file found. Ensure you have the correct dataset available."
+            )
         addLinks(cursor)
         conn.commit()
 
