@@ -7,9 +7,9 @@
 
     <link rel="icon" type="image/png" href="static/img/icontwo.png" />
 
- 
+
     <title>毎日四字</title>
- 
+
     <link href="static/vendor/halfmoon-2.0.2/css/halfmoon.min.css" rel="stylesheet">
     <link href="static/vendor/halfmoon-2.0.2/css/cores/halfmoon.elegant.css" rel="stylesheet">
 
@@ -22,14 +22,14 @@
     <style>
 /*
     .middle-x {
-  position: absolute; 
+  position: absolute;
   top: 50%; left: 0; right: 0; height: 2px; background-color: black;
-  transform: translateY(-50%); 
+  transform: translateY(-50%);
 }
     .middle-y {
-  position: fixed; 
+  position: fixed;
   top: 0; bottom:0; left: 50%; background-color: black; width: 2px;
-  transform: translateX(-50%); 
+  transform: translateX(-50%);
 }
 */
     * {
@@ -39,7 +39,7 @@
       font-family: yugothic, "Hiragino Sans", "Noto Sans JP", sans-serif;
       text-transform: lowercase;
     }
-    
+
     .modal-content {
       text-transform: none;
     }
@@ -146,7 +146,7 @@
     </footer>
 
 
- 
+
 <!-- License information Modal -->
 <div class="modal fade" id="license-modal" tabindex="-1">
   <div class="modal-dialog">
@@ -174,7 +174,7 @@
         const setDate = (dateString) => {
           const elem = document.querySelector('#date');
           const dateToSet = new Date(dateString);
-          elem.innerText = 
+          elem.innerText =
             new Intl.DateTimeFormat('ja-JP-u-ca-japanese', {
               era: 'long', // Long era name (e.g. '令和')
               year: 'numeric',
@@ -195,13 +195,13 @@
         const refreshData = (dateString) => {
           ['sentence_text', 'translation_text', 'usage'].forEach(elem => setElem(elem, ''));
 
-          fetch('http://192.168.0.216:5000/api/date/' + dateString)
+          fetch('http://0.0.0.0:5000/api/v1/date/' + dateString)
             .then(response => {
               if (!response.ok) { throw new Error(`HTTP error status: ${response.status}`); }
               return response.json();
             })
             .catch(error => console.error('Fetch error:', error))
-            .then((data) => { 
+            .then((data) => {
               console.log('yoji: ', data);
               const elemToUpdate = new Set(['kanji', 'reading', 'meaning', 'usage']);
               const filtered = Object.keys(data).filter(elem => elemToUpdate.has(elem) && data[elem] !== null);
@@ -218,8 +218,9 @@
               }
 
 
-              if (data['sentence_id'] !== null) {
-                fetch('http://192.168.0.216:5000/api/sentence/' + data['sentence_id'])
+              if (data['sentence_id'] !== null && data['sentence_id'] !== undefined) {
+                console.log('sentence_id : ', data['sentence_id'])
+                fetch('http://0.0.0.0:5000/api/v1/sentence/' + data['sentence_id'])
                   .then(response => {
                     if (!response.ok) { throw new Error(`HTTP error status: ${response.status}`); }
                     return response.json();
@@ -230,7 +231,7 @@
                     setElem('sentence_text', s_data['sentence_text']);
 
                     if (s_data.hasOwnProperty('translation_id') && s_data['translation_id'] !== null) {
-                      fetch('http://192.168.0.216:5000/api/translation/' + s_data['translation_id'])
+                      fetch('http://0.0.0.0:5000/api/v1/translation/' + s_data['translation_id'])
                         .then(response => {
                           if (!response.ok) { throw new Error(`HTTP error status: ${response.status}`); }
                           return response.json();
@@ -252,7 +253,8 @@
               }})
         }
 
-        const today = new Date();
+        // const today = new Date();
+        const today = new Date(2026, 1, 29)
         const dateString = today.toISOString().split('T')[0];
         setDate(dateString);
         refreshData(dateString);
@@ -264,7 +266,8 @@
 
       const btnNext = document.querySelector('#btn-next');
       btnNext.addEventListener('click', () => {
-        futureDate = new Date();
+        // futureDate = new Date();
+        futureDate = new Date(2026, 1, 29)
         futureDate.setDate(futureDate.getDate() + getRandomInt(9));
         const dateString = futureDate.toISOString().split('T')[0];
         setDate(dateString);
@@ -305,4 +308,3 @@
     </script>
   </body>
 </html>
-
