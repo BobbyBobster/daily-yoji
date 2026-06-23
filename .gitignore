@@ -2,6 +2,8 @@ data/
 fiddles/
 .DS_Store
 data/jawiki-latest-all-titles-in-ns0.gz
+*.db-shm
+*.db-wal
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
