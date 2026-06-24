@@ -110,7 +110,7 @@
           </div>
           <div class=col>
             <p id=meaning>A new 4-kanji compound everyday.</p>
-            <p>Use it as a <span id=usage>Noun</span></p>
+            <p>Use it as <span id=usage-article>a</span> <span id=usage>Noun</span></p>
             <p id=sentence_text></p>
             <p id=translation_text></p>
           </div>
@@ -192,6 +192,28 @@
           document.querySelector('#' + elemID).innerText = elemText;
         }
 
+        const setUsage = (usage) => {
+          const spUsage = document.querySelector('#usage')
+          const spArticle = document.querySelector('#usage-article')
+
+          const mapping = {
+            'adj': ['adjective', 'an'],
+            'adv': ['adverb (副詞)', 'an'],
+            'adj-na': ['"na" adjective (形容動詞)', 'a'],
+            'adj-no': ['"no" adjective (形容動詞)', 'a'],
+            'adj-t': ['"taru" adjective (形容動詞)', 'a'],
+            'exp': ['expression', 'an'],
+            'int': ['interjection (間投詞)', 'an'],
+            'n': ['common noun (普通名詞)', 'a'],
+            'n-adv': ['adverbial noun (副詞的名詞)', 'an'],
+            'n-t': ['temporal noun (時相名詞)', 'a'],
+            'vs': ['noun or "suru" verb (さ変形動名詞)', 'a']
+          }
+
+          spArticle.innerText = mapping[usage][1];
+          spUsage.innerText = mapping[usage][0]
+        }
+
         const refreshData = (dateString) => {
           ['sentence_text', 'translation_text', 'usage'].forEach(elem => setElem(elem, ''));
 
@@ -203,10 +225,11 @@
             .catch(error => console.error('Fetch error:', error))
             .then((data) => {
               console.log('yoji: ', data);
-              const elemToUpdate = new Set(['kanji', 'reading', 'meaning', 'usage']);
+              const elemToUpdate = new Set(['kanji', 'reading', 'meaning']);
               const filtered = Object.keys(data).filter(elem => elemToUpdate.has(elem) && data[elem] !== null);
               filtered.forEach(elem => setElem(elem, data[elem]));
 
+              setUsage(data['usage']);
               setDate(dateString);
 
               const btnWiki = document.querySelector('#wikipedia');
