@@ -179,23 +179,48 @@ def addLinks(cursor):
 def addDates(cursor):
     cursor.execute(
         """
-    SELECT COUNT(*) FROM yojijukugo;"""
+    SELECT id FROM yojijukugo
+    WHERE sentence_id IS NOT NULL;"""
     )
-    rowcount = cursor.fetchone()[0]
+    sentence_ids = cursor.fetchall()
+    sentence_count = len(sentence_ids)
 
-    indices = [idx for idx in range(1, rowcount + 1)]
+    cursor.execute(
+        """
+    SELECT id FROM yojijukugo
+    WHERE sentence_id IS NULL;"""
+    )
+    non_sentence_ids = cursor.fetchall()
+    non_sentence_count = len(non_sentence_ids)
+
+    total_count = sentence_count + non_sentence_count
+
     datelist = [
-        datetime.date.today() + datetime.timedelta(days=day) for day in range(rowcount)
+        datetime.date.today() + datetime.timedelta(days=day)
+        for day in range(total_count)
     ]
-    random.shuffle(datelist)
 
-    for idx, date in zip(indices, datelist):
+    sentence_dates = datelist[:sentence_count]
+    random.shuffle(sentence_dates)
+    non_sentence_dates = datelist[sentence_count:]
+    random.shuffle(non_sentence_dates)
+
+    for idx, date in zip(sentence_ids, sentence_dates):
         cursor.execute(
             """
         UPDATE yojijukugo
         SET date = ?
         WHERE id = ?""",
-            (date, idx),
+            (date.isoformat(), idx[0]),
+        )
+
+    for idx, date in zip(non_sentence_ids, non_sentence_dates):
+        cursor.execute(
+            """
+        UPDATE yojijukugo
+        SET date = ?
+        WHERE id = ?""",
+            (date.isoformat(), idx[0]),
         )
 
 
@@ -236,7 +261,7 @@ if __name__ == "__main__":
 
     if args.populate:
         populateDatabase(cursor)
-        cursor.execute("delete from yojijukugo where id > 10;")
+        cursor.execute("delete from yojijukugo where id > 100;")
         conn.commit()
 
     if args.sentences:
