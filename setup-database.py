@@ -2,12 +2,12 @@ import argparse
 import sqlite3
 import re
 import requests
-import time
 import subprocess
 import tempfile
 import os
 import datetime
 import random
+import asyncio
 
 
 def createTable(cursor):
@@ -82,50 +82,70 @@ def populateDatabase(cursor):
             )
 
 
-def addSentences(cursor):
-    # Add example sentences from tatoeba.org
+async def request_sentence(
+    yoji: str, semaphore: asyncio.Semaphore
+) -> requests.Response:
+    tatoeba_url_base = "https://api.tatoeba.org/v1/sentences"
+    tatoeba_params = "?lang=jpn&sort=relevance&limit=5&is_unapproved=no&license=CC+BY+2.0+FR&trans%3Alang=eng&trans%3Ais_direct=yes&trans%3Ais_unapproved=no"
+    async with semaphore:
+        print(f"Sending tatoeba request for: {yoji}")
+        tatoeba_response = await asyncio.to_thread(
+            requests.get, tatoeba_url_base + tatoeba_params + "&q=" + yoji
+        )
+        print(f"Received response for: {yoji}")
+        return tatoeba_response
+
+
+async def process_yoji(cursor: sqlite3.Cursor, yoji: str, semaphore: asyncio.Semaphore):
+    response = await request_sentence(yoji, semaphore)
+
+    if response.ok and response.json()["data"]:
+        s_data = response.json()["data"][0]
+        t_data = s_data["translations"][0]
+
+        print(f"Inserting for {yoji} the sentence: {s_data['text']}")
+
+        s_data["owner"] = "tatoeba" if s_data["owner"] is None else s_data["owner"]
+        t_data["owner"] = "tatoeba" if t_data["owner"] is None else t_data["owner"]
+
+        cursor.execute(
+            """
+            INSERT INTO translation
+            (id, translation_text, owner) VALUES (?, ?, ?);""",
+            (t_data["id"], t_data["text"], t_data["owner"]),
+        )
+
+        cursor.execute(
+            """
+            INSERT INTO sentence
+            (id, sentence_text, owner, translation_id) VALUES (?, ?, ?, ?);""",
+            (s_data["id"], s_data["text"], s_data["owner"], t_data["id"]),
+        )
+
+        cursor.execute(
+            """
+            UPDATE yojijukugo
+            SET sentence_id = ?
+            WHERE kanji IN (?);""",
+            (s_data["id"], yoji),
+        )
+
+
+async def run_tasks(tasks: list):
+    return await asyncio.gather(*tasks)
+
+
+def addSentences(cursor: sqlite3.Cursor, n_semaphore: int = 10):
     # TODO: If no translations exist for full-kanji use, try a version with hiragana
     cursor.execute("SELECT kanji FROM yojijukugo;")
     rows = cursor.fetchall()
 
+    semaphore = asyncio.Semaphore(n_semaphore)
+    tasks = []
     for row in rows:
-        time.sleep(0.5)
         yoji = row[0]
-        tatoeba_url_base = "https://api.tatoeba.org/v1/sentences"
-        tatoeba_params = "?lang=jpn&sort=relevance&limit=5&is_unapproved=no&license=CC+BY+2.0+FR&trans%3Alang=eng&trans%3Ais_direct=yes&trans%3Ais_unapproved=no"
-        tatoeba_response = requests.get(
-            tatoeba_url_base + tatoeba_params + "&q=" + yoji
-        )
-
-        if tatoeba_response.ok and tatoeba_response.json()["data"]:
-            print(tatoeba_response.json())
-            s_data = tatoeba_response.json()["data"][0]
-            t_data = s_data["translations"][0]
-
-            s_data["owner"] = "tatoeba" if s_data["owner"] is None else s_data["owner"]
-            t_data["owner"] = "tatoeba" if t_data["owner"] is None else t_data["owner"]
-
-            cursor.execute(
-                """
-                INSERT INTO translation
-                (id, translation_text, owner) VALUES (?, ?, ?);""",
-                (t_data["id"], t_data["text"], t_data["owner"]),
-            )
-
-            cursor.execute(
-                """
-                INSERT INTO sentence
-                (id, sentence_text, owner, translation_id) VALUES (?, ?, ?, ?);""",
-                (s_data["id"], s_data["text"], s_data["owner"], t_data["id"]),
-            )
-
-            cursor.execute(
-                """
-                UPDATE yojijukugo
-                SET sentence_id = ?
-                WHERE kanji IN (?);""",
-                (s_data["id"], yoji),
-            )
+        tasks.append(process_yoji(cursor, yoji, semaphore))
+    asyncio.run(run_tasks(tasks))
 
 
 def addLinks(cursor):
@@ -202,7 +222,7 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
-    conn = sqlite3.connect("yoji.db")
+    conn = sqlite3.connect("yoji.db", timeout=30.0)
     cursor = conn.cursor()
 
     if args.create:
@@ -234,11 +254,5 @@ if __name__ == "__main__":
     if args.dates:
         addDates(cursor)
         conn.commit()
-
-    cursor.execute("SELECT * FROM yojijukugo")
-    rows = cursor.fetchall()
-    for row in rows:
-        pass
-        # print(row)
 
     conn.close()
