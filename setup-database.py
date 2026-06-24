@@ -2,12 +2,12 @@ import argparse
 import sqlite3
 import re
 import requests
-import time
 import subprocess
 import tempfile
 import os
 import datetime
 import random
+import asyncio
 
 
 def createTable(cursor):
@@ -52,8 +52,8 @@ def createTable(cursor):
 
 def populateDatabase(cursor):
     kanji_pattern = r"[\u4E00-\u9FFF々]+"
-    hiragana_pattern = r"[\u3040-\u309F]+"
-    katakana_pattern = r"[\u30A0-\u30FF]+"
+    # hiragana_pattern = r"[\u3040-\u309F]+"
+    # katakana_pattern = r"[\u30A0-\u30FF]+"
     reading_pattern = r"[\u3040-\u309F\u30A0-\u30FF　]+"
 
     with open("data/utf8-4j324_sj.txt", "r") as f:
@@ -76,56 +76,76 @@ def populateDatabase(cursor):
 
             cursor.execute(
                 """
-                INSERT INTO yojijukugo 
+                INSERT INTO yojijukugo
                 (kanji, reading, usage, meaning) VALUES (?, ?, ?, ?);""",
                 (kanji[0], reading, usage, meaning[0]),
             )
 
 
-def addSentences(cursor):
-    # Add example sentences from tatoeba.org
+async def request_sentence(
+    yoji: str, semaphore: asyncio.Semaphore
+) -> requests.Response:
+    tatoeba_url_base = "https://api.tatoeba.org/v1/sentences"
+    tatoeba_params = "?lang=jpn&sort=relevance&limit=5&is_unapproved=no&license=CC+BY+2.0+FR&trans%3Alang=eng&trans%3Ais_direct=yes&trans%3Ais_unapproved=no"
+    async with semaphore:
+        print(f"Sending tatoeba request for: {yoji}")
+        tatoeba_response = await asyncio.to_thread(
+            requests.get, tatoeba_url_base + tatoeba_params + "&q=" + yoji
+        )
+        print(f"Received response for: {yoji}")
+        return tatoeba_response
+
+
+async def process_yoji(cursor: sqlite3.Cursor, yoji: str, semaphore: asyncio.Semaphore):
+    response = await request_sentence(yoji, semaphore)
+
+    if response.ok and response.json()["data"]:
+        s_data = response.json()["data"][0]
+        t_data = s_data["translations"][0]
+
+        print(f"Inserting for {yoji} the sentence: {s_data['text']}")
+
+        s_data["owner"] = "tatoeba" if s_data["owner"] is None else s_data["owner"]
+        t_data["owner"] = "tatoeba" if t_data["owner"] is None else t_data["owner"]
+
+        cursor.execute(
+            """
+            INSERT INTO translation
+            (id, translation_text, owner) VALUES (?, ?, ?);""",
+            (t_data["id"], t_data["text"], t_data["owner"]),
+        )
+
+        cursor.execute(
+            """
+            INSERT INTO sentence
+            (id, sentence_text, owner, translation_id) VALUES (?, ?, ?, ?);""",
+            (s_data["id"], s_data["text"], s_data["owner"], t_data["id"]),
+        )
+
+        cursor.execute(
+            """
+            UPDATE yojijukugo
+            SET sentence_id = ?
+            WHERE kanji IN (?);""",
+            (s_data["id"], yoji),
+        )
+
+
+async def run_tasks(tasks: list):
+    return await asyncio.gather(*tasks)
+
+
+def addSentences(cursor: sqlite3.Cursor, n_semaphore: int = 10):
     # TODO: If no translations exist for full-kanji use, try a version with hiragana
     cursor.execute("SELECT kanji FROM yojijukugo;")
     rows = cursor.fetchall()
 
+    semaphore = asyncio.Semaphore(n_semaphore)
+    tasks = []
     for row in rows:
-        time.sleep(0.5)
         yoji = row[0]
-        tatoeba_url_base = "https://api.tatoeba.org/v1/sentences"
-        tatoeba_params = "?lang=jpn&sort=relevance&limit=5&is_unapproved=no&license=CC+BY+2.0+FR&trans%3Alang=eng&trans%3Ais_direct=yes&trans%3Ais_unapproved=no"
-        tatoeba_response = requests.get(
-            tatoeba_url_base + tatoeba_params + "&q=" + yoji
-        )
-
-        if tatoeba_response.ok and tatoeba_response.json()["data"]:
-            print(tatoeba_response.json())
-            s_data = tatoeba_response.json()["data"][0]
-            t_data = s_data["translations"][0]
-
-            s_data["owner"] = "tatoeba" if s_data["owner"] is None else s_data["owner"]
-            t_data["owner"] = "tatoeba" if t_data["owner"] is None else t_data["owner"]
-
-            cursor.execute(
-                """
-                INSERT INTO translation
-                (id, translation_text, owner) VALUES (?, ?, ?);""",
-                (t_data["id"], t_data["text"], t_data["owner"]),
-            )
-
-            cursor.execute(
-                """
-                INSERT INTO sentence
-                (id, sentence_text, owner, translation_id) VALUES (?, ?, ?, ?);""",
-                (s_data["id"], s_data["text"], s_data["owner"], t_data["id"]),
-            )
-
-            cursor.execute(
-                """
-                UPDATE yojijukugo
-                SET sentence_id = ?
-                WHERE kanji IN (?);""",
-                (s_data["id"], yoji),
-            )
+        tasks.append(process_yoji(cursor, yoji, semaphore))
+    asyncio.run(run_tasks(tasks))
 
 
 def addLinks(cursor):
@@ -159,23 +179,48 @@ def addLinks(cursor):
 def addDates(cursor):
     cursor.execute(
         """
-    SELECT COUNT(*) FROM yojijukugo;"""
+    SELECT id FROM yojijukugo
+    WHERE sentence_id IS NOT NULL;"""
     )
-    rowcount = cursor.fetchone()[0]
+    sentence_ids = cursor.fetchall()
+    sentence_count = len(sentence_ids)
 
-    indices = [idx for idx in range(1, rowcount + 1)]
+    cursor.execute(
+        """
+    SELECT id FROM yojijukugo
+    WHERE sentence_id IS NULL;"""
+    )
+    non_sentence_ids = cursor.fetchall()
+    non_sentence_count = len(non_sentence_ids)
+
+    total_count = sentence_count + non_sentence_count
+
     datelist = [
-        datetime.date.today() + datetime.timedelta(days=day) for day in range(rowcount)
+        datetime.date.today() + datetime.timedelta(days=day)
+        for day in range(total_count)
     ]
-    random.shuffle(datelist)
 
-    for idx, date in zip(indices, datelist):
+    sentence_dates = datelist[:sentence_count]
+    random.shuffle(sentence_dates)
+    non_sentence_dates = datelist[sentence_count:]
+    random.shuffle(non_sentence_dates)
+
+    for idx, date in zip(sentence_ids, sentence_dates):
         cursor.execute(
             """
         UPDATE yojijukugo
         SET date = ?
         WHERE id = ?""",
-            (date, idx),
+            (date.isoformat(), idx[0]),
+        )
+
+    for idx, date in zip(non_sentence_ids, non_sentence_dates):
+        cursor.execute(
+            """
+        UPDATE yojijukugo
+        SET date = ?
+        WHERE id = ?""",
+            (date.isoformat(), idx[0]),
         )
 
 
@@ -202,7 +247,7 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
-    conn = sqlite3.connect("yoji.db")
+    conn = sqlite3.connect("yoji.db", timeout=30.0)
     cursor = conn.cursor()
 
     if args.create:
@@ -216,7 +261,7 @@ if __name__ == "__main__":
 
     if args.populate:
         populateDatabase(cursor)
-        cursor.execute("delete from yojijukugo where id > 10;")
+        cursor.execute("delete from yojijukugo where id > 100;")
         conn.commit()
 
     if args.sentences:
@@ -224,17 +269,15 @@ if __name__ == "__main__":
         conn.commit()
 
     if args.links:
+        if not os.path.exists("data/jawiki-latest-all-titles-in-ns0.gz"):
+            raise SystemExit(
+                "No wikipedia title file found. Ensure you have the correct dataset available."
+            )
         addLinks(cursor)
         conn.commit()
 
     if args.dates:
         addDates(cursor)
         conn.commit()
-
-    cursor.execute("SELECT * FROM yojijukugo")
-    rows = cursor.fetchall()
-    for row in rows:
-        pass
-        # print(row)
 
     conn.close()
