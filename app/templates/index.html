@@ -276,8 +276,7 @@
               }})
         }
 
-        // const today = new Date();
-        const today = new Date(2026, 5, 25)
+        const today = new Date();
         const dateString = today.toISOString().split('T')[0];
         setDate(dateString);
         refreshData(dateString);
@@ -286,12 +285,13 @@
 
     <script>
       const getRandomInt = (max) => { return Math.floor(Math.random() * max); }
+      let daycounter = 1
 
       const btnNext = document.querySelector('#btn-next');
       btnNext.addEventListener('click', () => {
-        // futureDate = new Date();
-        futureDate = new Date(2026, 5, 25)
-        futureDate.setDate(futureDate.getDate() + getRandomInt(9));
+        futureDate = new Date();
+        futureDate.setDate(futureDate.getDate() + daycounter);
+        daycounter += 1;
         const dateString = futureDate.toISOString().split('T')[0];
         setDate(dateString);
         refreshData(dateString);

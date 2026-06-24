@@ -4,7 +4,7 @@ Get a new 4-kanji compound every day and try to use it in conversation.
 
 <img src="/../screenshots/screenshots/openingscreen.png" alt="Opening screen" width="200"/>
 <br>
-App home: _Currently not live._
+App home: https://daily-yoji-ea42f6642dfe.herokuapp.com/
 
 
 ## Getting Started
@@ -20,7 +20,7 @@ pip install -r requirements.txt
 ### DB Setup
 First download the relevant data files.
 ```
-python3 setup-database.py --create --populate --sentences --links --dates 
+python3 setup-database.py --create --populate --sentences --links --dates
 ```
 
 ### Run a server
@@ -37,7 +37,7 @@ flask run
 ## Relevant licenses
 - CC BY 2.0 FR for Tatoeba sentences
 - Kanji Haitani for the 4jword3 file
-  Four-Character Idiomatic Compounds         Yojijukugo   2005   v.3.11   
+  Four-Character Idiomatic Compounds         Yojijukugo   2005   v.3.11
   英訳四字熟語辞典    第３版    (2005年）
   Copyright  2005  Kanji Haitani
 - https://www.edrdg.org/edrdg/licence.html
