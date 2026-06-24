@@ -254,7 +254,7 @@
         }
 
         // const today = new Date();
-        const today = new Date(2026, 5, 23)
+        const today = new Date(2026, 5, 25)
         const dateString = today.toISOString().split('T')[0];
         setDate(dateString);
         refreshData(dateString);
@@ -267,7 +267,7 @@
       const btnNext = document.querySelector('#btn-next');
       btnNext.addEventListener('click', () => {
         // futureDate = new Date();
-        futureDate = new Date(2026, 5, 23)
+        futureDate = new Date(2026, 5, 25)
         futureDate.setDate(futureDate.getDate() + getRandomInt(9));
         const dateString = futureDate.toISOString().split('T')[0];
         setDate(dateString);
