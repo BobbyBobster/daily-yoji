@@ -18,7 +18,9 @@ class YojiResponse(BaseModel):
     is_wikipedia_link: bool | None = None
     sentence_id: int | None = None
 
+
 _yoji_cols = YojiResponse.model_fields.keys()
+
 
 class SentenceResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True, extra="ignore")
@@ -27,13 +29,16 @@ class SentenceResponse(BaseModel):
     owner: str
     translation_id: int
 
+
 _sentence_cols = SentenceResponse.model_fields.keys()
+
 
 class TranslationResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True, extra="ignore")
     id: int
     translation_text: str
     owner: str
+
 
 _translation_cols = TranslationResponse.model_fields.keys()
 
@@ -50,7 +55,7 @@ async def index(
     print(YojiResponse.model_fields.keys())
     query = text(
         f"""
-        SELECT {', '.join(_yoji_cols)} FROM yojijukugo
+        SELECT {", ".join(_yoji_cols)} FROM yojijukugo
         WHERE id < :max_id;"""
     )
     result = await conn.execute(query, {"max_id": max_id})
@@ -67,7 +72,7 @@ async def yoji(
 ) -> YojiResponse:
     query = text(
         f"""
-        SELECT {', '.join(_yoji_cols)} FROM yojijukugo
+        SELECT {", ".join(_yoji_cols)} FROM yojijukugo
         WHERE id = :id;"""
     )
     result = await conn.execute(query, {"id": id_})
@@ -84,7 +89,7 @@ async def search_yoji(
 ) -> list[YojiResponse]:
     query = text(
         f"""
-        SELECT {', '.join(_yoji_cols)} FROM yojijukugo
+        SELECT {", ".join(_yoji_cols)} FROM yojijukugo
         WHERE kanji = :q;"""
     )
     result = await conn.execute(query, {"q": q})
@@ -106,7 +111,7 @@ async def date_string(
 
     query = text(
         f"""
-        SELECT {', '.join(_yoji_cols)} FROM yojijukugo
+        SELECT {", ".join(_yoji_cols)} FROM yojijukugo
         WHERE date = :date;"""
     )
     result = await conn.execute(query, {"date": date})
@@ -116,11 +121,6 @@ async def date_string(
     return YojiResponse(**row)
 
 
-@router.route("/date/{year}/{month}/{day}")
-async def date_url(year: int, month: int, day: int):
-    return await date_string(str(datetime.date(year, month, day)))
-
-
 @router.get("/sentence/{id_}")
 async def sentence(
     id_: int,
@@ -128,7 +128,7 @@ async def sentence(
 ) -> SentenceResponse:
     query = text(
         f"""
-        SELECT {', '.join(_sentence_cols)} FROM sentence
+        SELECT {", ".join(_sentence_cols)} FROM sentence
         WHERE id = :id;"""
     )
     result = await conn.execute(query, {"id": id_})
@@ -145,7 +145,7 @@ async def translation(
 ) -> TranslationResponse:
     query = text(
         f"""
-        SELECT {', '.join(_translation_cols)} owner from translation
+        SELECT {", ".join(_translation_cols)} owner from translation
         WHERE id = :id;"""
     )
     result = await conn.execute(query, {"id": id_})
